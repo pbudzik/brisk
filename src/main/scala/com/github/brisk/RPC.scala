@@ -36,14 +36,6 @@ trait RPC {
 
   def invokeAll(service: String, in: Message = Message()) =
     clients.values.map(_.invoke(service, in))
-
-  def foo(service: String, in: Message = Message(), stopPredicate: Message => Boolean) = {
-    val futures = clients.values.par.map {
-      client =>
-        val f = client.invoke(service, in)
-        f
-    }
-    //futures.head.
   }
 
   def destroy()
