@@ -42,12 +42,11 @@ class Message(val underlying: BSONObject = new BasicBSONObject) {
 
   override def toString = underlying.toString
 
+  def dyna = new DynaMessage(this)
 }
 
 object Message {
   val Service = "_service"
-  lazy val encoder = new BasicBSONEncoder
-  lazy val decoder = new BasicBSONDecoder
 
   def apply[A <: String, B <: Any](elems: (A, B)*): Message = {
     val bso = new BasicBSONObject
@@ -57,14 +56,36 @@ object Message {
     new Message(bso)
   }
 
-  def encode(doc: Message) = encoder.encode(doc.underlying)
+  def encode(doc: Message) = {
+    val encoder = new BasicBSONEncoder
+    encoder.encode(doc.underlying)
+  }
 
   def decode(bytes: Array[Byte]) = {
+    val decoder = new BasicBSONDecoder
     val callback = new BasicBSONCallback
     decoder.decode(bytes, callback)
     callback.get() match {
       case bso: BSONObject => new Message(bso)
       case _ => throw new Exception("cant deserialize")
     }
+  }
+
+}
+
+import scala.language.dynamics
+
+class DynaMessage(message: Message) extends Dynamic {
+
+  def selectDynamic(key: String) = {
+    if (message.underlying.containsField(key))
+      message.get(key)
+    else throw new NoSuchElementException("No value for: " + key)
+  }
+
+  def applyDynamic(key: String)(args: Any*) = {
+    if (message.underlying.containsField(key))
+      message.get(key)
+    else throw new NoSuchElementException("No value for: " + key)
   }
 }

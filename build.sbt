@@ -6,7 +6,7 @@ name := "brisk"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.9.2"
+scalaVersion := "2.10.0-RC5"
 
 resolvers ++= Seq(
   "typesafe" at "http://repo.typesafe.com/typesafe/releases/",
@@ -20,16 +20,18 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.mongodb" % "mongo-java-driver" % "2.9.1",
+  //"com.codahale" %% "jerkson" % "0.5.0",
   "ch.qos.logback" % "logback-classic" % "0.9.30" % "compile",
   "io.netty" % "netty" % "3.5.11.Final",
   "org.jgroups" % "jgroups" % "3.2.4.Final",
   "org.xerial.snappy" % "snappy-java" % "1.0.5-M3",
-  "org.scalatest" %% "scalatest" % "1.6.1"% "test"
+  "org.scalatest" % "scalatest"  % "1.8-B1"  % "test" cross CrossVersion.full
 )
 
 scalacOptions ++= Seq(
   "-deprecation",
   //"-Xmigration",
+  "-Xexperimental",
   "-Xcheckinit",
   "-optimise",
   "-encoding", "utf8"
@@ -42,7 +44,7 @@ publishTo <<= (version) { version: String =>
   if (version.trim.endsWith("SNAPSHOT"))
     Some("snapshots" at nexus + "snapshots/")
   else
-    Some("releases"  at nexus + "releases/")
+    Some("releases" at nexus + "releases/")
 }
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")

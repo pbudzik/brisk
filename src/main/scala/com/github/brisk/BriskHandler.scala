@@ -21,29 +21,32 @@
 package com.github.brisk
 
 import org.jboss.netty.channel._
+import group.ChannelGroup
 import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
 import org.xerial.snappy.Snappy
 
-class BriskHandler(handler: Message => Message) extends SimpleChannelUpstreamHandler with Logging {
+class BriskHandler(channels: ChannelGroup, handler: Message => Message) extends SimpleChannelUpstreamHandler with Logging {
 
   override def messageReceived(ctx: ChannelHandlerContext, event: MessageEvent) {
-    println("Message received in server")
+    debug("Message received in server")
     val inBytes = event.getMessage.asInstanceOf[ChannelBuffer].array()
     val in = (Message.decode(Snappy.uncompress(inBytes)))
-    println(ctx, inBytes.mkString(","))
-    println("Decoded: " + in)
-    println("Handler: " + handler)
+    debug("Decoded in: " + in + ", Handler: " + handler)
     val out = handler(in)
-    println("Out: " + out)
+    debug("Out: " + out)
     val outBytes: Array[Byte] = Message.encode(out)
-    val future = event.getChannel.write(ChannelBuffers.copiedBuffer(Snappy.compress(outBytes)))
-    //  future.awaitUninterruptibly(5000)
-    future.addListener(ChannelFutureListener.CLOSE)
+    val channel = event.getChannel
+    channels.add(channel)
+    val future = channel.write(ChannelBuffers.copiedBuffer(Snappy.compress(outBytes)))
+    //future.addListener(ChannelFutureListener.CLOSE)
+    //future.getChannel.getCloseFuture.awaitUninterruptibly()
+    //future.getChannel.close()
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
     warn("Server: Unexpected exception from downstream: %s".format(e.getCause))
     e.getChannel.close()
+    e.getCause.printStackTrace()
   }
 }
 

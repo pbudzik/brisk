@@ -1,1 +1,1 @@
-Distributed database on top of Bytecask
+Light RPC for Scala

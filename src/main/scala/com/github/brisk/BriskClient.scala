@@ -21,68 +21,94 @@
 package com.github.brisk
 
 import org.jboss.netty.bootstrap.ClientBootstrap
-import java.util.concurrent.Executors
+import java.util.concurrent.{TimeUnit, CountDownLatch, Executors}
 import org.jboss.netty.channel._
+import group.{ChannelGroup, DefaultChannelGroup}
 import java.net.InetSocketAddress
 import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
 import socket.nio.NioClientSocketChannelFactory
 import org.xerial.snappy.Snappy
-import scala.actors.Futures._
+import scala.concurrent._
+import duration.Duration
+import ExecutionContext.Implicits.global
 
-class BriskClient(host: String, port: Int) {
+class BriskClient(host: String, port: Int) extends Logging {
   val bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
     Executors.newCachedThreadPool()))
+  val channels = new DefaultChannelGroup
   bootstrap.setOption("tcpNoDelay", true)
   bootstrap.setOption("keepAlive", true)
 
-  def invokeSync(service: String, in: Message) = synchronized {
-    val handler = new ClientHandler(in + (Message.Service -> service))
+  def invoke(service: String, in: Message) = future {
+    val handler = new ClientHandler(channels, in + (Message.Service -> service))
     bootstrap.setPipelineFactory(new BriskClientPipelineFactory(handler))
     val future = bootstrap.connect(new InetSocketAddress(host, port))
-    future.getChannel.getCloseFuture.await()
-    println("response=" + handler.out)
-    handler.out
+    //future.getChannel.getCloseFuture.await()
+    //future.getChannel.getCloseFuture.awaitUninterruptibly()
+    //future.getChannel.close()
+    //future.addListener(ChannelFutureListener.CLOSE)
+    handler.get
   }
 
-  def invoke(service: String, in: Message) = future {
-    invokeSync(service: String, in: Message)
+  def invokeSync(service: String, in: Message) = {
+    val future = invoke(service: String, in: Message)
+    //blocking(future, 1000)
+    //future.value
+    Await.result(future, Duration.create(5, TimeUnit.SECONDS))
   }
 
   def destroy() {
+    channels.close().awaitUninterruptibly()
     bootstrap.releaseExternalResources()
+    debug("Client " + host + ":" + port + " destroyed")
   }
+
+  class BriskClientPipelineFactory(handler: ChannelHandler) extends ChannelPipelineFactory {
+
+    def getPipeline = {
+      val pipeline = org.jboss.netty.channel.Channels.pipeline()
+      pipeline.addLast("handler", handler)
+      pipeline
+    }
+  }
+
 }
 
-class ClientHandler(in: Message) extends SimpleChannelUpstreamHandler with Logging {
+class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUpstreamHandler with Logging {
+
+  val latch = new CountDownLatch(1)
 
   var out: Message = _
 
+  def get = {
+    try {
+      latch.await()
+    } catch {
+      case e: InterruptedException => throw new Exception(e)
+    }
+    out
+  }
+
   override def messageReceived(ctx: ChannelHandlerContext, event: MessageEvent) {
-    println("Message received in client")
+    debug("Message received in client")
     val bytes = event.getMessage.asInstanceOf[ChannelBuffer].array()
     out = Message.decode(Snappy.uncompress(bytes))
-    println("out=" + out)
+    latch.countDown()
+    debug("out=" + out)
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-    println("Client: Unexpected exception from downstream: %s".format(e.getCause))
+    warn("Client: Unexpected exception from downstream: %s".format(e.getCause))
     e.getChannel.close()
   }
 
   override def channelConnected(ctx: ChannelHandlerContext, event: ChannelStateEvent) {
-    println("Writting....")
-    event.getChannel.write(ChannelBuffers.copiedBuffer(Snappy.compress(Message.encode(in))))
-    println("Written")
+    debug("Writting....")
+    val channel = event.getChannel
+    channels.add(channel)
+    channel.write(ChannelBuffers.copiedBuffer(Snappy.compress(Message.encode(in))))
+    debug("Written")
   }
 
 }
 
-class BriskClientPipelineFactory(handler: ChannelHandler) extends ChannelPipelineFactory {
-
-  def getPipeline = {
-    val pipeline = org.jboss.netty.channel.Channels.pipeline()
-    pipeline.addLast("handler", handler)
-    pipeline
-  }
-
-}

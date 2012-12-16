@@ -20,9 +20,8 @@
 
 package com.github.brisk
 
-import cluster.{Server, Clustered}
 
-class Brisk(port: Int) {
+class Brisk(port: Int) extends Logging {
 
   lazy val server = new BriskServer(port)
 
@@ -35,6 +34,7 @@ class Brisk(port: Int) {
   def start() {
     server.configure(mainHandler)
     server.start()
+    debug("Server at " + port + " started")
   }
 
   def stop() {
@@ -50,22 +50,5 @@ class Brisk(port: Int) {
       throw new Exception("No service defined: " + service)
   }
 
-}
-
-class ClusteredBrisk(port: Int, cluster: String) extends Brisk(port) with Clustered {
-
-  override def start() {
-    super.start()
-    connectCluster(cluster, port)
-  }
-
-  override def stop() {
-    disconnectCluster()
-    super.stop()
-  }
-
-  def membersRegistered(members: Set[Server]) {}
-
-  def membersLost(members: Set[Server]) {}
 }
 

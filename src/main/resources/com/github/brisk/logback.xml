@@ -7,7 +7,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>amon.log</File>
+        <File>brisk.log</File>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>amon.%d{yyyy-MM-dd}.log</FileNamePattern>
         </rollingPolicy>
@@ -17,9 +17,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.eclipse" level="INFO"/>
-    <logger name="com.github.brisk" level="DEBUG"/>
-    <logger name="com.twitter.finagle" level="DEBUG"/>
+    <logger name="com.github.brisk" level="INFO"/>
 
     <logger name="ch.qos" level="OFF" additivity="false"/>
 

@@ -25,12 +25,14 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
 import java.util.concurrent.Executors
 import java.net.InetSocketAddress
 import org.jboss.netty.channel.ChannelPipelineFactory
+import org.jboss.netty.channel.group.DefaultChannelGroup
 
-class BriskServer(port: Int) {
+class BriskServer(port: Int) extends Logging {
   val bootstrap = new ServerBootstrap(
     new NioServerSocketChannelFactory(
       Executors.newCachedThreadPool(),
       Executors.newCachedThreadPool()))
+  val channels = new DefaultChannelGroup()
 
   def configure(handler: Message => Message) {
     bootstrap.setPipelineFactory(new BriskPipelineFactory(handler))
@@ -41,17 +43,20 @@ class BriskServer(port: Int) {
   }
 
   def stop() {
+    channels.close().awaitUninterruptibly()
     bootstrap.releaseExternalResources()
+    debug("Server at " + port + " destroyed")
+  }
+
+  class BriskPipelineFactory(handler: Message => Message) extends ChannelPipelineFactory {
+
+    def getPipeline = {
+      val pipeline = org.jboss.netty.channel.Channels.pipeline()
+      pipeline.addLast("handler", new BriskHandler(channels, handler))
+      pipeline
+    }
+
   }
 
 }
 
-class BriskPipelineFactory(handler: Message => Message) extends ChannelPipelineFactory {
-
-  def getPipeline = {
-    val pipeline = org.jboss.netty.channel.Channels.pipeline()
-    pipeline.addLast("handler", new BriskHandler(handler))
-    pipeline
-  }
-
-}

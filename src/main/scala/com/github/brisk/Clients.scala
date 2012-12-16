@@ -22,46 +22,14 @@ package com.github.brisk
 
 import cluster.{Server, Clustered}
 import collection.mutable.Map
-import java.util.concurrent.atomic.AtomicInteger
 
 object Clients {
-  def multiNode(servers: Server*) = new GroupBriskClient(servers)
+  def multiNode(servers: Server*) = new MultiNodeBriskClient(servers)
 
   def clustered(cluster: String) = new ClusteredBriskClient(cluster)
 }
 
-trait RPC {
-
-  val clients: Map[Server, BriskClient]
-
-  def invokeSync(service: String, in: Message = Message(), selector: Selector = RoundRobin) =
-    selector.selectOne(clients).invokeSync(service, in)
-
-  def invoke(service: String, in: Message = Message(), selector: Selector = RoundRobin) =
-    selector.selectOne(clients).invoke(service, in)
-
-  def invokeAll(service: String, in: Message = Message()): List[Message] =
-    clients.values.par.map(_.invokeSync(service, in)).toList
-
-  def destroy()
-
-  trait Selector {
-    def selectOne(client: Map[Server, BriskClient]): BriskClient
-  }
-
-  object RoundRobin extends Selector {
-    val counter = new AtomicInteger
-
-    def selectOne(clients: Map[Server, BriskClient]) =
-      if (clients.isEmpty) throw new Exception("No Brisk servers connected to cluster")
-      else
-        clients.values.toList(counter.incrementAndGet() % clients.size)
-
-  }
-
-}
-
-class GroupBriskClient(servers: Seq[Server]) extends RPC {
+class MultiNodeBriskClient(servers: Seq[Server]) extends RPC {
   val clients = Map[Server, BriskClient]() ++ servers.map {
     server => (server, new BriskClient(server.host, server.port))
   }
