@@ -25,14 +25,15 @@ import group.ChannelGroup
 import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
 import org.xerial.snappy.Snappy
 
-class BriskHandler(channels: ChannelGroup, handler: Message => Message) extends SimpleChannelUpstreamHandler with Logging {
+class BriskHandler(channels: ChannelGroup, processor: Message => Message) extends SimpleChannelUpstreamHandler
+with Logging {
 
   override def messageReceived(ctx: ChannelHandlerContext, event: MessageEvent) {
     debug("Message received in server")
     val inBytes = event.getMessage.asInstanceOf[ChannelBuffer].array()
     val in = (Message.decode(Snappy.uncompress(inBytes)))
-    debug("Decoded in: " + in + ", Handler: " + handler)
-    val out = handler(in)
+    debug("Decoded in: " + in + ", Handler: " + processor)
+    val out = processor(in)
     debug("Out: " + out)
     val outBytes: Array[Byte] = Message.encode(out)
     val channel = event.getChannel

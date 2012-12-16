@@ -72,13 +72,13 @@ case class BriskClient(host: String, port: Int) extends Logging {
 
 class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUpstreamHandler with Logging {
 
-  val latch = new CountDownLatch(1)
+  val done = new CountDownLatch(1)
 
   var out: Message = _
 
   def get = {
     try {
-      latch.await()
+      done.await()
     } catch {
       case e: InterruptedException => throw new Exception(e)
     }
@@ -89,7 +89,7 @@ class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUp
     debug("Message received in client")
     val bytes = event.getMessage.asInstanceOf[ChannelBuffer].array()
     out = Message.decode(Snappy.uncompress(bytes))
-    latch.countDown()
+    done.countDown()
     debug("out=" + out)
     ctx.getChannel.close().awaitUninterruptibly()
   }

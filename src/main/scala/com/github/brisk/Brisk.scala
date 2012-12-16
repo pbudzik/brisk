@@ -27,8 +27,8 @@ class Brisk(port: Int) extends Logging {
 
   val services = new collection.mutable.HashMap[String, Message => Message]()
 
-  def service(name: String)(handler: Message => Message) {
-    services += (name -> handler)
+  def service(name: String)(processor: Message => Message) {
+    services += (name -> processor)
   }
 
   def start() {
@@ -43,9 +43,9 @@ class Brisk(port: Int) extends Logging {
 
   def mainHandler(in: Message) = {
     val service = in.getString(Message.Service)
-    val handler = services.get(service)
-    if (handler.nonEmpty)
-      handler.get(in - Message.Service)
+    val processor = services.get(service)
+    if (processor.nonEmpty)
+      processor.get(in - Message.Service)
     else
       throw new Exception("No service defined: " + service)
   }

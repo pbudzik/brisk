@@ -34,8 +34,8 @@ class BriskServer(port: Int) extends Logging {
       Executors.newCachedThreadPool()))
   val channels = new DefaultChannelGroup()
 
-  def configure(handler: Message => Message) {
-    bootstrap.setPipelineFactory(new BriskPipelineFactory(handler))
+  def configure(processor: Message => Message) {
+    bootstrap.setPipelineFactory(new BriskPipelineFactory(processor))
   }
 
   def start() {
@@ -48,11 +48,11 @@ class BriskServer(port: Int) extends Logging {
     debug("Server at " + port + " destroyed")
   }
 
-  class BriskPipelineFactory(handler: Message => Message) extends ChannelPipelineFactory {
+  class BriskPipelineFactory(processor: Message => Message) extends ChannelPipelineFactory {
 
     def getPipeline = {
       val pipeline = org.jboss.netty.channel.Channels.pipeline()
-      pipeline.addLast("handler", new BriskHandler(channels, handler))
+      pipeline.addLast("handler", new BriskHandler(channels, processor))
       pipeline
     }
 
