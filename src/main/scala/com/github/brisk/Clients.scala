@@ -65,5 +65,4 @@ class ClusteredBriskClient(cluster: String) extends RPC with Clustered {
     clients.values.foreach(_.destroy())
   }
 
-
 }

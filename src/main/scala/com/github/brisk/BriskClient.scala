@@ -42,18 +42,12 @@ class BriskClient(host: String, port: Int) extends Logging {
   def invoke(service: String, in: Message) = future {
     val handler = new ClientHandler(channels, in + (Message.Service -> service))
     bootstrap.setPipelineFactory(new BriskClientPipelineFactory(handler))
-    val future = bootstrap.connect(new InetSocketAddress(host, port))
-    //future.getChannel.getCloseFuture.await()
-    //future.getChannel.getCloseFuture.awaitUninterruptibly()
-    //future.getChannel.close()
-    //future.addListener(ChannelFutureListener.CLOSE)
+    bootstrap.connect(new InetSocketAddress(host, port))
     handler.get
   }
 
   def invokeSync(service: String, in: Message) = {
     val future = invoke(service: String, in: Message)
-    //blocking(future, 1000)
-    //future.value
     Await.result(future, Duration.create(5, TimeUnit.SECONDS))
   }
 
