@@ -36,7 +36,6 @@ trait RPC {
 
   def invokeAll(service: String, in: Message = Message()) =
     clients.values.map(_.invoke(service, in))
-  }
 
   def destroy()
 
