@@ -22,7 +22,7 @@ package com.github.brisk.rpc
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
-import com.github.brisk.{Utils, Clients, Message, Brisk}
+import com.github.brisk._
 import com.github.brisk.cluster.Server
 import concurrent.Await
 import concurrent.duration.Duration
@@ -103,7 +103,12 @@ class ServicesSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach
     val out4 = client.invokeAll("foo")
     println("futures: " + out4)
     out4.foreach(Await.result(_, Duration.create(5, TimeUnit.SECONDS)))
+
+    val o = client.invokeSpecific("foo", Message(), CountPredicate(2).atLeast)
+    Thread.sleep(500)
+    println(o)
   }
+
 
   //-----------------------
 

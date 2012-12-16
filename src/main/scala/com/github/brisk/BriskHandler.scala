@@ -38,6 +38,7 @@ class BriskHandler(channels: ChannelGroup, handler: Message => Message) extends 
     val channel = event.getChannel
     channels.add(channel)
     channel.write(ChannelBuffers.copiedBuffer(Snappy.compress(outBytes)))
+    channel.close().awaitUninterruptibly()
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {

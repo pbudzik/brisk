@@ -23,6 +23,10 @@ package com.github.brisk
 
 import cluster.Server
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.CountDownLatch
+import concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
+import Predicates._
 
 trait RPC {
 
@@ -36,6 +40,28 @@ trait RPC {
 
   def invokeAll(service: String, in: Message = Message()) =
     clients.values.map(_.invoke(service, in))
+
+  def invokeSpecific(service: String, in: Message, stopPredicate: Message => Boolean,
+                     serverPredicate: Server => Boolean = all) = {
+    val completion = new CountDownLatch(1)
+    var result: Option[Message] = None
+    for (client <- clients.values.filter(client => serverPredicate(client.getHost))) {
+      val p = client.invoke(service, in)
+      p.onSuccess {
+        case msg =>
+          if (stopPredicate(msg)) {
+            completion.countDown()
+            result = Some(msg)
+          }
+      }
+    }
+    try {
+      completion.await()
+    } catch {
+      case e: InterruptedException => throw new Exception(e)
+    }
+    result
+  }
 
   def destroy()
 

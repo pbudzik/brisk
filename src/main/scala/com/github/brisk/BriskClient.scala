@@ -20,6 +20,7 @@
 
 package com.github.brisk
 
+import cluster.Server
 import org.jboss.netty.bootstrap.ClientBootstrap
 import java.util.concurrent.{TimeUnit, CountDownLatch, Executors}
 import org.jboss.netty.channel._
@@ -32,7 +33,7 @@ import scala.concurrent._
 import duration.Duration
 import ExecutionContext.Implicits.global
 
-class BriskClient(host: String, port: Int) extends Logging {
+case class BriskClient(host: String, port: Int) extends Logging {
   val bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
     Executors.newCachedThreadPool()))
   val channels = new DefaultChannelGroup
@@ -66,6 +67,7 @@ class BriskClient(host: String, port: Int) extends Logging {
     }
   }
 
+  lazy val getHost = Server(host, port)
 }
 
 class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUpstreamHandler with Logging {
@@ -89,6 +91,7 @@ class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUp
     out = Message.decode(Snappy.uncompress(bytes))
     latch.countDown()
     debug("out=" + out)
+    ctx.getChannel.close().awaitUninterruptibly()
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
