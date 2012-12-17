@@ -46,8 +46,8 @@ trait RPC {
     val completion = new CountDownLatch(1)
     var result: Option[Message] = None
     for (client <- clients.values.filter(client => serverPredicate(client.getHost))) {
-      val p = client.invoke(service, in)
-      p.onSuccess {
+      val future = client.invoke(service, in)
+      future.onSuccess {
         case msg =>
           if (stopPredicate(msg)) {
             completion.countDown()

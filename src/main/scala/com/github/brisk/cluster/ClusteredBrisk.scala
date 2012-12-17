@@ -21,8 +21,10 @@
 package com.github.brisk.cluster
 
 import com.github.brisk.Brisk
+import collection.mutable
 
 class ClusteredBrisk(port: Int, val cluster: String) extends Brisk(port) with Clustered {
+  val peers = mutable.HashSet[Server]()
 
   override def start() {
     super.start()
@@ -34,8 +36,12 @@ class ClusteredBrisk(port: Int, val cluster: String) extends Brisk(port) with Cl
     super.stop()
   }
 
-  def membersRegistered(members: Set[Server]) {}
+  def membersRegistered(members: Set[Server]) {
+    peers ++= members
+  }
 
-  def membersLost(members: Set[Server]) {}
+  def membersLost(members: Set[Server]) {
+    peers --= members
+  }
 }
 
