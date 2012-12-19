@@ -22,38 +22,37 @@ package com.github.brisk.rpc
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
-import com.github.brisk.{Clients, Message}
-import com.github.brisk.cluster.ClusteredBrisk
-import com.github.brisk.Utils._
+import com.github.brisk._
+import concurrent.Await
+import concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
+import Utils._
 
-class ClusteredSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach {
+class ErrorSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach {
 
-  var servers: List[ClusteredBrisk] = Nil
+  var servers: List[Brisk] = Nil
 
-  test("clustered basic test") {
-    val b1 = new ClusteredBrisk(9191, "test-cluster") {
+  test("server is down") {
+    val client = Clients.multiNode(localServers(9081, 9082): _*)
+    val result = client.invokeSync("foo")
+    result.isFailure should be(true)
+    client.destroy()
+  }
+
+  test("incorrect service call") {
+    servers = List(new Brisk(9099) {
       service("foo") {
         in => Message("status" -> 100, "time" -> System.currentTimeMillis())
       }
-    }
-    val b2 = cloneClusteredBrisk(b1, 9192)
-    val b3 = cloneClusteredBrisk(b1, 9193)
-    val b4 = cloneClusteredBrisk(b1, 9194)
-    servers = List(b1, b2, b3, b4)
-
+    })
     servers.foreach(_.start())
-
-    val client = Clients.clustered("test-cluster")
-
-
-    for (_ <- 1 to 100) {
-      val out = client.invokeSync("foo").get
-      out.get("status") should be(100)
-      out.getAs[Long]("time") should be > (0L)
-    }
-
+    val client = Clients.multiNode(localServers(9099): _*)
+    client.invokeSync("foo1").isFailure should be(true)
+    client.invokeSync("foo").isFailure should be(false)
     client.destroy()
   }
+
+  //-----------------------
 
   override def beforeEach() {
   }

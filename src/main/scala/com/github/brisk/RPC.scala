@@ -27,12 +27,13 @@ import java.util.concurrent.CountDownLatch
 import concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 import Predicates._
+import util.{Success, Try}
 
 trait RPC {
 
   val clients: collection.mutable.Map[Server, BriskClient]
 
-  def invokeSync(service: String, in: Message = Message(), selector: Selector = RoundRobin) =
+  def invokeSync(service: String, in: Message = Message(), selector: Selector = RoundRobin): Try[Message] =
     selector.selectOne(clients).invokeSync(service, in)
 
   def invoke(service: String, in: Message = Message(), selector: Selector = RoundRobin) =
@@ -48,7 +49,7 @@ trait RPC {
     for (client <- clients.values.filter(client => serverPredicate(client.getHost))) {
       val future = client.invoke(service, in)
       future.onSuccess {
-        case msg =>
+        case Success(msg) =>
           if (stopPredicate(msg)) {
             completion.countDown()
             result = Some(msg)
@@ -58,7 +59,7 @@ trait RPC {
     try {
       completion.await()
     } catch {
-      case e: InterruptedException => throw new Exception(e)
+      case e: InterruptedException => e
     }
     result
   }

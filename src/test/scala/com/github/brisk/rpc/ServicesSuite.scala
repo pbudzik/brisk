@@ -49,7 +49,7 @@ class ServicesSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach
     val client = Clients.multiNode(localServers(9091, 9092, 9093, 9094): _*)
 
     for (_ <- 1 to 100) {
-      val out = client.invokeSync("foo")
+      val out = client.invokeSync("foo").get
       out.get("status") should be(100)
       out.getAs[Long]("time") should be > (0L)
     }
@@ -84,14 +84,14 @@ class ServicesSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach
 
     val nodes = Seq(1, 2, 3)
 
-    val out1 = client.invokeSync("foo")
+    val out1 = client.invokeSync("foo").get
     assert(nodes contains (out1.get("node")))
     println(out1)
     println("\n\n")
-    val out2 = client.invokeSync("foo")
+    val out2 = client.invokeSync("foo").get
     assert(nodes contains (out2.get("node")))
     println(out2)
-    val out3 = client.invokeSync("foo")
+    val out3 = client.invokeSync("foo").get
     assert(nodes contains (out3.get("node")))
     println(out3)
 

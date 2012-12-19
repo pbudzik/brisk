@@ -47,7 +47,7 @@ class Brisk(port: Int) extends Logging {
     if (processor.nonEmpty)
       processor.get(in - Message.Service)
     else
-      throw new Exception("No service defined: " + service)
+      Message("_error" -> ("No service defined: " + service))
   }
 
 }

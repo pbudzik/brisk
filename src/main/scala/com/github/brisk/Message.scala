@@ -42,6 +42,11 @@ class Message(val underlying: BSONObject = new BasicBSONObject) {
 
   override def toString = underlying.toString
 
+  override def equals(obj: Any): Boolean = obj match {
+    case msg: Message => msg.underlying == underlying
+    case _ => false
+  }
+
   def dyna = new DynaMessage(this)
 }
 

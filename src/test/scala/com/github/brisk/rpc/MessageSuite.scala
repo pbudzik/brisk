@@ -27,7 +27,12 @@ import scala.language.dynamics
 
 class MessageSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach {
 
-  test("dyna message") {
+  test("encode/decode message") {
+    val msg = Message("foo" -> 1)
+    Message.decode(Message.encode(msg)) should equal(msg)
+  }
+
+  test("dynamic message") {
     val msg = Message("foo" -> 1, "bar" -> true, "baz" -> "LONVXTHYTFDSMI").dyna
     msg.foo should be(1)
     msg.bar should equal(true)

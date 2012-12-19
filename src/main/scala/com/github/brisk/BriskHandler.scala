@@ -45,7 +45,6 @@ with Logging {
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
     warn("Server: Unexpected exception from downstream: %s".format(e.getCause))
     e.getChannel.close()
-    e.getCause.printStackTrace()
   }
 }
 

@@ -32,6 +32,7 @@ import org.xerial.snappy.Snappy
 import scala.concurrent._
 import duration.Duration
 import ExecutionContext.Implicits.global
+import scala.util.{Failure, Success, Try}
 
 case class BriskClient(host: String, port: Int) extends Logging {
   val bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
@@ -74,13 +75,13 @@ class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUp
 
   val done = new CountDownLatch(1)
 
-  var out: Message = _
+  var out: Try[Message] = _
 
   def get = {
     try {
       done.await()
     } catch {
-      case e: InterruptedException => throw new Exception(e)
+      case e: InterruptedException => throw e
     }
     out
   }
@@ -88,7 +89,11 @@ class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUp
   override def messageReceived(ctx: ChannelHandlerContext, event: MessageEvent) {
     debug("Message received in client")
     val bytes = event.getMessage.asInstanceOf[ChannelBuffer].array()
-    out = Message.decode(Snappy.uncompress(bytes))
+    val message = (Message.decode(Snappy.uncompress(bytes)))
+    if (message.underlying.containsField("_error"))
+      out = Failure(new IllegalAccessException(message.getAs[String]("_error")))
+    else
+      out = Success(message)
     done.countDown()
     debug("out=" + out)
     ctx.getChannel.close().awaitUninterruptibly()
@@ -96,7 +101,9 @@ class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUp
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
     warn("Client: Unexpected exception from downstream: %s".format(e.getCause))
+    out = Failure(e.getCause)
     e.getChannel.close()
+    done.countDown()
   }
 
   override def channelConnected(ctx: ChannelHandlerContext, event: ChannelStateEvent) {

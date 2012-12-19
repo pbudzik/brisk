@@ -53,7 +53,7 @@ object ClusterUtils {
       .addProtocol(new UFC())
       .addProtocol(new MFC())
       .addProtocol(new FRAG2()); // 4
-    stack.init();
+    stack.init()
   }
 
   def nextMemberId = InetAddress.getLocalHost.getHostAddress + ":" + memberIdSequence.incrementAndGet()
