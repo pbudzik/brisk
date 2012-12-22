@@ -24,6 +24,10 @@ import cluster.{Server, Clustered}
 import collection.mutable.Map
 
 object Clients {
+  def create(server: Server) = new MultiNodeBriskClient(Seq(server))
+
+  def create(host: String, port: Int): MultiNodeBriskClient = create(Server(host, port))
+
   def multiNode(servers: Server*) = new MultiNodeBriskClient(servers)
 
   def clustered(cluster: String) = new ClusteredBriskClient(cluster)

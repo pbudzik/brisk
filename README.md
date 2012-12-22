@@ -1,12 +1,39 @@
 #### Brisk - Lightweight RPC for Scala ####
 
-* minimalistic
-* BSON and Mongo style objects
+* minimalistic, less is more
+* BSON and Mongo style objects + syntactic sugar
 * clustering supported, no external tools needed (e.g. Zookeeper)
-* based on Netty, asyns/sync modes
-* Scala 2.10 ready
+* based on Netty, async/sync mode
+* Scala 2.10 ready (Future/Promise/Try, Dynamics)
 
 ### Example ###
+
+Server:
+```scala
+import util.{Failure, Success}
+
+object BasicBriskExample extends App {
+  val server = new Brisk(8080) {
+    service("foo") {
+      in => Message("status" -> 200, "time" -> System.currentTimeMillis())
+    }
+  }
+  server.start()
+
+  val client = Clients.create("localhost", 8080)
+  client.invokeSync("foo") match {
+    case Success(out) => {
+      println(out.status)
+      println(out.time)
+    }
+    case Failure(e) => throw e
+  }
+
+  server.stop()
+  client.destroy()
+}
+```
+
 
 [See the tests](https://github.com/pbudzik/brisk/tree/master/src/test/scala/com/github/brisk/rpc)
 

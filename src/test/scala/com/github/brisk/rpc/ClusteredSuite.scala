@@ -45,7 +45,6 @@ class ClusteredSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEac
 
     val client = Clients.clustered("test-cluster")
 
-
     for (_ <- 1 to 100) {
       val out = client.invokeSync("foo").get
       out.get("status") should be(100)

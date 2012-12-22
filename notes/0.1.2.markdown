@@ -1,0 +1,3 @@
+First minor release of Brisk.
+Compiled with sbt 0.12.1 and Scala 2.10-RC5.
+

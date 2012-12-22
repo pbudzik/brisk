@@ -23,7 +23,6 @@ package com.github.brisk.rpc
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import com.github.brisk.Message
-import scala.language.dynamics
 
 class MessageSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach {
 
@@ -33,7 +32,7 @@ class MessageSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach 
   }
 
   test("dynamic message") {
-    val msg = Message("foo" -> 1, "bar" -> true, "baz" -> "LONVXTHYTFDSMI").dyna
+    val msg = Message("foo" -> 1, "bar" -> true, "baz" -> "LONVXTHYTFDSMI")
     msg.foo should be(1)
     msg.bar should equal(true)
     msg.baz should equal("LONVXTHYTFDSMI")

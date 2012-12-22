@@ -21,8 +21,9 @@
 package com.github.brisk
 
 import org.bson._
+import scala.language.dynamics
 
-class Message(val underlying: BSONObject = new BasicBSONObject) {
+class Message(val underlying: BSONObject = new BasicBSONObject) extends Dynamic {
 
   def get(key: String) = underlying.get(key)
 
@@ -47,7 +48,17 @@ class Message(val underlying: BSONObject = new BasicBSONObject) {
     case _ => false
   }
 
-  def dyna = new DynaMessage(this)
+  def selectDynamic(key: String) = {
+    if (underlying.containsField(key))
+      get(key)
+    else throw new NoSuchElementException("No value for: " + key)
+  }
+
+  def applyDynamic(key: String)(args: Any*) = {
+    if (underlying.containsField(key))
+      get(key)
+    else throw new NoSuchElementException("No value for: " + key)
+  }
 }
 
 object Message {
@@ -78,19 +89,3 @@ object Message {
 
 }
 
-import scala.language.dynamics
-
-class DynaMessage(message: Message) extends Dynamic {
-
-  def selectDynamic(key: String) = {
-    if (message.underlying.containsField(key))
-      message.get(key)
-    else throw new NoSuchElementException("No value for: " + key)
-  }
-
-  def applyDynamic(key: String)(args: Any*) = {
-    if (message.underlying.containsField(key))
-      message.get(key)
-    else throw new NoSuchElementException("No value for: " + key)
-  }
-}
