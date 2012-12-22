@@ -84,6 +84,8 @@ object ClusteredBriskExample extends App {
   }
 }
 ```
+[See the source](https://github.com/pbudzik/brisk/blob/master/src/main/scala/com/github/brisk/example/BasicBriskExample.scala)
+
 Other:
 
 ```scala

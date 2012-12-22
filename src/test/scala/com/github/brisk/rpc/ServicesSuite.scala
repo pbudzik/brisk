@@ -23,26 +23,25 @@ package com.github.brisk.rpc
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import com.github.brisk._
-import com.github.brisk.cluster.Server
 import concurrent.Await
-import concurrent.duration.Duration
-import java.util.concurrent.TimeUnit
+import scala.concurrent.duration._
 import Utils._
+import Predicates.all
 
 class ServicesSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach {
 
   var servers: List[Brisk] = Nil
 
   test("multinode basic test") {
-    val b1 = new Brisk(9091) {
+    val s1 = new Brisk(9091) {
       service("foo") {
         in => Message("status" -> 100, "time" -> System.currentTimeMillis())
       }
     }
-    val b2 = cloneBrisk(b1, 9092)
-    val b3 = cloneBrisk(b1, 9093)
-    val b4 = cloneBrisk(b1, 9094)
-    servers = List(b1, b2, b3, b4)
+    val s2 = cloneBrisk(s1, 9092)
+    val s3 = cloneBrisk(s1, 9093)
+    val s4 = cloneBrisk(s1, 9094)
+    servers = List(s1, s2, s3, s4)
 
     servers.foreach(_.start())
 
@@ -60,23 +59,23 @@ class ServicesSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach
   }
 
   test("multinode invocations") {
-    val b1 = new Brisk(9081) {
+    val s1 = new Brisk(9081) {
       service("foo") {
         in => Message("node" -> 1)
       }
     }
-    val b2 = new Brisk(9082) {
+    val s2 = new Brisk(9082) {
       service("foo") {
         in => Message("node" -> 2)
       }
     }
-    val b3 = new Brisk(9083) {
+    val s3 = new Brisk(9083) {
       service("foo") {
         in => Message("node" -> 3)
       }
     }
 
-    servers = List(b1, b2, b3)
+    servers = List(s1, s2, s3)
 
     servers.foreach(_.start())
 
@@ -85,30 +84,30 @@ class ServicesSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach
     val nodes = Seq(1, 2, 3)
 
     val out1 = client.invokeSync("foo").get
-    assert(nodes contains (out1.get("node")))
+    assert(nodes contains out1.node)
     println(out1)
     println("\n\n")
     val out2 = client.invokeSync("foo").get
-    assert(nodes contains (out2.get("node")))
+    assert(nodes contains out2.node)
     println(out2)
     val out3 = client.invokeSync("foo").get
-    assert(nodes contains (out3.get("node")))
+    assert(nodes contains out3.node)
     println(out3)
 
     val out5 = client.invoke("foo")
     println(out5)
-    Await.result(out5, Duration.create(5, TimeUnit.SECONDS))
-    println(out5.value)
+    val t = Await.result(out5, 5 seconds)
+    println(t.get)
+    assert(nodes contains t.get.node)
 
     val out4 = client.invokeAll("foo")
     println("futures: " + out4)
-    out4.foreach(Await.result(_, Duration.create(5, TimeUnit.SECONDS)))
+    out4.foreach(Await.result(_, 5 seconds))
 
-    val o = client.invokeSpecific("foo", Message(), CountPredicate(2).atLeast)
+    val o = client.invokeSpecific("foo", Message(), CountPredicate(2).atLeast, all)
     Thread.sleep(500)
     println(o)
   }
-
 
   //-----------------------
 
