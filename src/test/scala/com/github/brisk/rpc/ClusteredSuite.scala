@@ -31,15 +31,15 @@ class ClusteredSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEac
   var servers: List[ClusteredBrisk] = Nil
 
   test("clustered basic test") {
-    val b1 = new ClusteredBrisk(9191, "test-cluster") {
+    val s1 = new ClusteredBrisk(9191, "test-cluster") {
       service("foo") {
         in => Message("status" -> 100, "time" -> System.currentTimeMillis())
       }
     }
-    val b2 = cloneClusteredBrisk(b1, 9192)
-    val b3 = cloneClusteredBrisk(b1, 9193)
-    val b4 = cloneClusteredBrisk(b1, 9194)
-    servers = List(b1, b2, b3, b4)
+    val s2 = cloneClusteredBrisk(s1, 9192)
+    val s3 = cloneClusteredBrisk(s1, 9193)
+    val s4 = cloneClusteredBrisk(s1, 9194)
+    servers = List(s1, s2, s3, s4)
 
     servers.foreach(_.start())
 

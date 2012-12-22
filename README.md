@@ -8,7 +8,8 @@
 
 ### Example ###
 
-Server:
+Basic single node case:
+
 ```scala
 import util.{Failure, Success}
 
@@ -44,6 +45,61 @@ object BasicBriskExample extends App {
 }
 ```
 
+Clustered case:
+
+```scala
+object ClusteredBriskExample extends App {
+  val s1 = new ClusteredBrisk(8080, "test-cluster") {
+    service("foo") {
+      in => Message("node" -> 1, "status" -> 100, "time" -> System.currentTimeMillis())
+    }
+  }
+  val s2 = new ClusteredBrisk(8081, "test-cluster") {
+    service("foo") {
+      in => Message("node" -> 2, "status" -> 100, "time" -> System.currentTimeMillis())
+    }
+  }
+  val servers = List(s1, s2)
+  servers.foreach(_.start())
+
+  val client = Clients.clustered("test-cluster")
+
+  //by default it is round-robin
+  invoke()
+  invoke()
+  invoke()
+
+  client.destroy()
+
+  servers.foreach(_.stop())
+
+  def invoke() {
+    //sync invocation
+    client.invokeSync("foo") match {
+      case Success(out) => {
+        println("node: " + out.node)
+      }
+      case Failure(e) => throw e
+    }
+  }
+}
+```
+Other:
+
+```scala
+//invoke across all servers
+val all = client.invokeAll("foo")
+//blocking await
+all.foreach(Await.result(_, 5 seconds))
+```
+
+Predicates:
+
+```scala
+//completion predicate -> at least 2 results collected
+//server predicate -> take all servers
+ val result = client.invokeSpecific("foo", Message(), CountPredicate(2).atLeast, all)
+```
 
 [See the tests](https://github.com/pbudzik/brisk/tree/master/src/test/scala/com/github/brisk/rpc)
 
