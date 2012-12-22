@@ -30,7 +30,7 @@ import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
 import socket.nio.NioClientSocketChannelFactory
 import org.xerial.snappy.Snappy
 import scala.concurrent._
-import duration.Duration
+import scala.concurrent.duration._
 import ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
 
@@ -50,7 +50,7 @@ case class BriskClient(host: String, port: Int) extends Logging {
 
   def invokeSync(service: String, in: Message) = {
     val future = invoke(service: String, in: Message)
-    Await.result(future, Duration.create(5, TimeUnit.SECONDS))
+    Await.result(future, 5 seconds)
   }
 
   def destroy() {
