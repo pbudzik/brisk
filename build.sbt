@@ -29,6 +29,7 @@ scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
   "-language:postfixOps",
+  "-language:dynamics",
   //"-Xmigration",
   "-Xexperimental",
   "-Xcheckinit",

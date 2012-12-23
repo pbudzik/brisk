@@ -33,8 +33,9 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
+import Message._
 
-case class BriskClient(host: String, port: Int) extends Logging {
+case class BriskClient(host: String, port: Int, timeout: Long = 5000) extends Logging {
   val bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),
     Executors.newCachedThreadPool()))
   val channels = new DefaultChannelGroup
@@ -42,7 +43,7 @@ case class BriskClient(host: String, port: Int) extends Logging {
   bootstrap.setOption("keepAlive", true)
 
   def invoke(service: String, in: Message) = future {
-    val handler = new ClientHandler(channels, in + (Message.Service -> service))
+    val handler = new ClientHandler(channels, in + (Message._service -> service), timeout)
     bootstrap.setPipelineFactory(new BriskClientPipelineFactory(handler))
     bootstrap.connect(new InetSocketAddress(host, port))
     handler.get
@@ -50,7 +51,7 @@ case class BriskClient(host: String, port: Int) extends Logging {
 
   def invokeSync(service: String, in: Message) = {
     val future = invoke(service: String, in: Message)
-    Await.result(future, 5 seconds)
+    Await.result(future, timeout milliseconds)
   }
 
   def destroy() {
@@ -71,7 +72,7 @@ case class BriskClient(host: String, port: Int) extends Logging {
   lazy val getHost = Server(host, port)
 }
 
-class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUpstreamHandler with Logging {
+class ClientHandler(channels: ChannelGroup, in: Message, timeout: Long) extends SimpleChannelUpstreamHandler with Logging {
 
   val done = new CountDownLatch(1)
 
@@ -79,7 +80,7 @@ class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUp
 
   def get = {
     try {
-      done.await()
+      done.await(timeout, TimeUnit.MILLISECONDS)
     } catch {
       case e: InterruptedException => throw e
     }
@@ -90,13 +91,13 @@ class ClientHandler(channels: ChannelGroup, in: Message) extends SimpleChannelUp
     debug("Message received in client")
     val bytes = event.getMessage.asInstanceOf[ChannelBuffer].array()
     val message = (Message.decode(Snappy.uncompress(bytes)))
-    if (message.underlying.containsField("_error"))
-      out = Failure(new IllegalAccessException(message.getAs[String]("_error")))
+    if (message.underlying.containsField(_error))
+      out = Failure(new IllegalAccessException(message.getAs[String](_error)))
     else
       out = Success(message)
-    done.countDown()
     debug("out=" + out)
     ctx.getChannel.close().awaitUninterruptibly()
+    done.countDown()
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {

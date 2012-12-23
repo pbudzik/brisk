@@ -1,1 +1,1 @@
-[Brisk](https://github.com/pbudzik/brisk) is a simplistic RPC framework for Scala.
+[Brisk](https://github.com/pbudzik/brisk) is a leightweight RPC framework for Scala.

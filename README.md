@@ -98,6 +98,7 @@ all.foreach(Await.result(_, 5 seconds))
 Predicates:
 
 ```scala
+//async call across multiple servers
 //completion predicate -> at least 2 results collected
 //server predicate -> take all servers
  val result = client.invokeSpecific("foo", Message(), CountPredicate(2).atLeast, all)

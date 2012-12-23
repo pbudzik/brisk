@@ -1,6 +1,14 @@
 First minor release of Brisk.
 Compiled with sbt 0.12.1 and Scala 2.10-RC5.
 
+Features:
+
+- lightweight RPC messaging
+- clustering
+- Scala objects transported as compressed BSON
+- Mongo style objects (map w/ embedding) + dynamics syntactic sugar
+- Scala 2.10.0 ready (Future/Promise/Try, Dynamics)
+
 Sample usage:
 
 import util.{Failure, Success}

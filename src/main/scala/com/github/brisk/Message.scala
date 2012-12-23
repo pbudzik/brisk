@@ -21,7 +21,6 @@
 package com.github.brisk
 
 import org.bson._
-import scala.language.dynamics
 
 class Message(val underlying: BSONObject = new BasicBSONObject) extends Dynamic {
 
@@ -62,7 +61,8 @@ class Message(val underlying: BSONObject = new BasicBSONObject) extends Dynamic 
 }
 
 object Message {
-  val Service = "_service"
+  val _service = "_service"
+  val _error = "_error"
 
   def apply[A <: String, B <: Any](elems: (A, B)*): Message = {
     val bso = new BasicBSONObject
@@ -83,7 +83,7 @@ object Message {
     decoder.decode(bytes, callback)
     callback.get() match {
       case bso: BSONObject => new Message(bso)
-      case _ => throw new Exception("cant deserialize")
+      case _ => throw new IllegalStateException("Can't deserialize bytes")
     }
   }
 

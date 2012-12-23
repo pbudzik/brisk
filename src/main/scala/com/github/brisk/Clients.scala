@@ -33,7 +33,7 @@ object Clients {
   def clustered(cluster: String) = new ClusteredBriskClient(cluster)
 }
 
-class MultiNodeBriskClient(servers: Seq[Server]) extends RPC {
+class MultiNodeBriskClient(servers: Seq[Server], val timeout: Long = 5000) extends RPC {
   val clients = Map[Server, BriskClient]() ++ servers.map {
     server => (server, new BriskClient(server.host, server.port))
   }
@@ -43,7 +43,7 @@ class MultiNodeBriskClient(servers: Seq[Server]) extends RPC {
   }
 }
 
-class ClusteredBriskClient(cluster: String) extends RPC with Clustered {
+class ClusteredBriskClient(cluster: String, val timeout: Long = 5000) extends RPC with Clustered {
   val clients = Map[Server, BriskClient]()
 
   connectCluster(cluster)
@@ -51,7 +51,7 @@ class ClusteredBriskClient(cluster: String) extends RPC with Clustered {
   def membersRegistered(members: Set[Server]) {
     clients.synchronized {
       for (server <- members; if server.port > 0)
-        clients += (server -> new BriskClient(server.host, server.port))
+        clients += (server -> new BriskClient(server.host, server.port, timeout))
     }
   }
 

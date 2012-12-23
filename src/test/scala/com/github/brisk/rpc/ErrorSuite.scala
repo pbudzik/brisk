@@ -33,8 +33,9 @@ class ErrorSuite extends FunSuite with ShouldMatchers with BeforeAndAfterEach {
   var servers: List[Brisk] = Nil
 
   test("server is down") {
-    val client = Clients.multiNode(localServers(9081, 9082): _*)
+    val client = Clients.multiNode(localServers(9111, 9222): _*)
     val result = client.invokeSync("foo")
+    result should not be (null)
     result.isFailure should be(true)
     client.destroy()
   }

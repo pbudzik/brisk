@@ -20,6 +20,7 @@
 
 package com.github.brisk
 
+import Message._
 
 class Brisk(port: Int) extends Logging {
 
@@ -42,12 +43,12 @@ class Brisk(port: Int) extends Logging {
   }
 
   def mainHandler(in: Message) = {
-    val service = in.getString(Message.Service)
+    val service = in.getString(Message._service)
     val processor = services.get(service)
     if (processor.nonEmpty)
-      processor.get(in - Message.Service)
+      processor.get(in - Message._service)
     else
-      Message("_error" -> ("No service defined: " + service))
+      Message(_error -> ("No service defined: " + service))
   }
 
 }

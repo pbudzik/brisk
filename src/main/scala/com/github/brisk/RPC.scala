@@ -23,14 +23,14 @@ package com.github.brisk
 
 import cluster.Server
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.{TimeUnit, CountDownLatch}
 import concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 import Predicates._
 import util.{Success, Try}
 
 trait RPC {
-
+  val timeout: Long
   val clients: collection.mutable.Map[Server, BriskClient]
 
   def invokeSync(service: String, in: Message = Message(), selector: Selector = RoundRobin): Try[Message] =
@@ -46,7 +46,8 @@ trait RPC {
                      serverPredicate: Server => Boolean = all) = {
     val completion = new CountDownLatch(1)
     var result: Option[Message] = None
-    for (client <- clients.values.filter(client => serverPredicate(client.getHost))) {
+    val selected = clients.values.filter(client => serverPredicate(client.getHost))
+    for (client <- selected) {
       val future = client.invoke(service, in)
       future.onSuccess {
         case Success(msg) =>
@@ -57,7 +58,7 @@ trait RPC {
       }
     }
     try {
-      completion.await()
+      completion.await(timeout, TimeUnit.MILLISECONDS)
     } catch {
       case e: InterruptedException => e
     }

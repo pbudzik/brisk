@@ -39,6 +39,6 @@ case class CountPredicate(count: Int) {
     }
   }
 
-  def atLeast(message: Message, p: Message => Boolean): Boolean = atLeast(message) && p(message)
+  def atLeastThat(message: Message)(p: Message => Boolean): Boolean = atLeast(message) && p(message)
 
 }
