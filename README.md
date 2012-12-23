@@ -8,7 +8,7 @@
 
 ### Example ###
 
-Basic single node case:
+Basic single node scenario:
 
 ```scala
 import util.{Failure, Success}
@@ -45,7 +45,7 @@ object BasicBriskExample extends App {
 }
 ```
 
-Clustered case:
+Clustered scenario:
 
 ```scala
 object ClusteredBriskExample extends App {
@@ -86,7 +86,7 @@ object ClusteredBriskExample extends App {
 ```
 [See the source](https://github.com/pbudzik/brisk/blob/master/src/main/scala/com/github/brisk/example/BasicBriskExample.scala)
 
-Other:
+Other examples:
 
 ```scala
 //invoke across all servers
@@ -101,7 +101,9 @@ Predicates:
 //async call across multiple servers
 //completion predicate -> at least 2 results collected
 //server predicate -> take all servers
- val result = client.invokeSpecific("foo", Message(), CountPredicate(2).atLeast, all)
+val result = client.invokeSpecific("foo", Message(), CountPredicate(2).atLeast, all)
+...
+val foo = client.invokeSpecific("foo", Message(), CountPredicate(2).atLeastThat(message => message.status == 200, all)
 ```
 
 [See the tests](https://github.com/pbudzik/brisk/tree/master/src/test/scala/com/github/brisk/rpc)
