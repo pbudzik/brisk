@@ -6,16 +6,13 @@ name := "brisk"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.10.0-RC5"
+scalaVersion := "2.10.0"
 
 resolvers ++= Seq(
   "typesafe" at "http://repo.typesafe.com/typesafe/releases/",
   "scala-tools" at "http://scala-tools.org/repo-releases",
   "sonatype-snapshots" at "https://oss.sonatype.org/content/groups/public",
-  "maven" at "http://repo1.maven.org/maven2",
-  "oracle" at "http://download.oracle.com/maven",
-  "twitter" at "http://maven.twttr.com/",
-  "java-net" at "http://download.java.net/maven/2"
+  "maven" at "http://repo1.maven.org/maven2"
 )
 
 libraryDependencies ++= Seq(
@@ -25,11 +22,13 @@ libraryDependencies ++= Seq(
   "io.netty" % "netty" % "3.5.11.Final",
   "org.jgroups" % "jgroups" % "3.2.4.Final",
   "org.xerial.snappy" % "snappy-java" % "1.0.5-M3",
-  "org.scalatest" % "scalatest"  % "1.8-B1"  % "test" cross CrossVersion.full
+  "org.scalatest" % "scalatest_2.10.0"  % "1.8"  % "test"
 )
 
 scalacOptions ++= Seq(
   "-deprecation",
+  "-feature",
+  "-language:postfixOps",
   //"-Xmigration",
   "-Xexperimental",
   "-Xcheckinit",
